@@ -1,8 +1,37 @@
-const Authors = (props) => {
-  if (!props.show) {
+import { useState } from 'react'
+import Select from 'react-select'
+
+const Authors = ({ show, result, editAuthor }) => {
+  const [selectedOption, setSelectedOption] = useState(null)
+  const [born, setBorn] = useState('')
+
+  if (!show) {
     return null
   }
-  const authors = []
+
+  if (result.loading) {
+    return <div>loading...</div>
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (selectedOption != null) {
+      editAuthor({
+        variables: {
+          name: selectedOption.value,
+          born: parseInt(born),
+        },
+      })
+      setSelectedOption(null)
+      setBorn('')
+    }
+  }
+
+  const authors = result.data.allAuthors
+  const options = authors.map((a) => ({
+    value: a.name,
+    label: a.name,
+  }))
 
   return (
     <div>
@@ -14,7 +43,7 @@ const Authors = (props) => {
             <th>born</th>
             <th>books</th>
           </tr>
-          {authors.map((a) => (
+          {result.data.allAuthors.map((a) => (
             <tr key={a.name}>
               <td>{a.name}</td>
               <td>{a.born}</td>
@@ -23,6 +52,28 @@ const Authors = (props) => {
           ))}
         </tbody>
       </table>
+
+      <h2>Set birthyear</h2>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <Select
+            defaultValue={selectedOption}
+            onChange={setSelectedOption}
+            options={options}
+          />
+        </div>
+        <div>
+          <label>
+            born
+            <input
+              type="number"
+              value={born}
+              onChange={(e) => setBorn(e.target.value)}
+            />
+          </label>
+        </div>
+        <button type="submit">update author</button>
+      </form>
     </div>
   )
 }
