@@ -149,44 +149,59 @@ const resolvers = {
   Query: {
     bookCount: async () => Book.collection.countDocuments(),
     authorCount: async () => Author.collection.countDocuments(),
-    allBooks: (root, args) => {
+    allBooks: async (root, args) => {
       // const booksByAuthor = args.author
       //   ? books.filter((b) => b.author === args.author)
       //   : books
       // return args.genre
       //   ? booksByAuthor.filter((b) => b.genres.includes(args.genre))
       //   : booksByAuthor
-      return Book.find({})
+      return Book.find({}).populate('author')
     },
     allAuthors: async () => {
       return Author.find({})
     },
   },
   Author: {
-    bookCount: (root) => books.filter((b) => b.author === root.name).length,
+    bookCount: async (root) => {
+      const booksByAuthor = await Book.find({ author: root.id })
+      return booksByAuthor.length
+    },
   },
   Mutation: {
     addBook: async (root, args) => {
-      let author = await Author.findOne({ name: args.author })
+      try {
+        let author = await Author.findOne({ name: args.author })
 
-      if (!author) {
-        author = new Author({ name: args.author })
-        await author.save()
+        if (!author) {
+          author = new Author({ name: args.author })
+          await author.save()
+        }
+
+        const book = new Book({ ...args, author: author._id })
+        await book.save()
+
+        return book
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
       }
-
-      const book = new Book({ ...args, author: author._id })
-      await book.save()
-
-      return book
     },
     editAuthor: async (root, args) => {
-      const author = await Author.findOne({ name: args.name })
-      if (!author) return null
+      try {
+        const author = await Author.findOne({ name: args.name })
+        if (!author) return null
 
-      author.born = args.setBornTo
-      await author.save()
+        author.born = args.setBornTo
+        await author.save()
 
-      return author
+        return author
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
     },
   },
 }
