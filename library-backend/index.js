@@ -80,12 +80,12 @@ const resolvers = {
     authorCount: async () => Author.collection.countDocuments(),
     allBooks: async (root, args) => {
       let query = {}
-
+      console.log(args)
       if (args.author) {
         let author = await Author.findOne({ name: args.author })
         query.author = author._id
       }
-
+      
       if (args.genre) {
         query.genres = { $in: [args.genre] }
       }
@@ -190,12 +190,13 @@ const server = new ApolloServer({
   resolvers,
   context: async ({ req }) => {
     const auth = req ? req.headers.authorization : null
+    
     if (auth && auth.toLowerCase().startsWith('bearer ')) {
       const decodedToken = jwt.verify(auth.substring(7), JWT_SECRET)
       const currentUser = await User.findById(decodedToken.id)
       return { currentUser }
     }
-  },
+  }
 })
 
 server.listen().then(({ url }) => {
