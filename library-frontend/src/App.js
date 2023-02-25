@@ -11,11 +11,11 @@ const App = () => {
   const [page, setPage] = useState('authors')
   const client = useApolloClient()
   const authors = useQuery(ALL_AUTHORS)
-  const books = useQuery(ALL_BOOKS, {
-    // variables: {
-    //   genre: 'SQL',
-    // },
-  })
+  // const books = useQuery(ALL_BOOKS, {
+  //   // variables: {
+  //   //   genre: 'SQL',
+  //   // },
+  // })
 
   const [addBook] = useMutation(CREATE_BOOK, {
     onError: (error) => {
@@ -67,7 +67,7 @@ const App = () => {
         editAuthor={editAuthor}
       />
 
-      <Books show={page === 'books'} result={books} />
+      <Books show={page === 'books'}  />
 
       <NewBook show={page === 'add'} addBook={addBook} setPage={setPage} />
 
