@@ -3,19 +3,23 @@ import Authors from './components/Authors'
 import Books from './components/Books'
 import NewBook from './components/NewBook'
 import { gql, useApolloClient, useMutation, useQuery } from '@apollo/client'
-import { ALL_BOOKS, ALL_AUTHORS, CREATE_BOOK, EDIT_AUTHOR } from './queries'
+import {
+  ALL_BOOKS,
+  ALL_AUTHORS,
+  CREATE_BOOK,
+  EDIT_AUTHOR,
+  USER,
+} from './queries'
 import LoginForm from './components/LoginForm'
+import Recommendation from './components/Recommendation'
 
 const App = () => {
   const [token, setToken] = useState(null)
   const [page, setPage] = useState('authors')
   const client = useApolloClient()
-  const authors = useQuery(ALL_AUTHORS)
-  // const books = useQuery(ALL_BOOKS, {
-  //   // variables: {
-  //   //   genre: 'SQL',
-  //   // },
-  // })
+  const { refetch: refetchAuthors, ...authors } = useQuery(ALL_AUTHORS)
+  const { refetch: refetchUser, ...user } = useQuery(USER)
+  const { refetch: refetchBooks, ...books } = useQuery(ALL_BOOKS)
 
   const [addBook] = useMutation(CREATE_BOOK, {
     onError: (error) => {
@@ -38,14 +42,15 @@ const App = () => {
     }
   }, [])
 
-  // useEffect(() => {
-  //   console.log(token)
-  // }, [token])
+  useEffect(() => {
+    refetchUser()
+  }, [token, refetchUser])
 
   const logout = () => {
     setToken(null)
     localStorage.clear()
     client.resetStore()
+    setPage('authors')
   }
 
   return (
@@ -54,6 +59,9 @@ const App = () => {
         <button onClick={() => setPage('authors')}>authors</button>
         <button onClick={() => setPage('books')}>books</button>
         {token && <button onClick={() => setPage('add')}>add book</button>}
+        {token && (
+          <button onClick={() => setPage('recommendation')}>recommend</button>
+        )}
         {token ? (
           <button onClick={logout}>logout</button>
         ) : (
@@ -67,11 +75,17 @@ const App = () => {
         editAuthor={editAuthor}
       />
 
-      <Books show={page === 'books'}  />
+      <Books show={page === 'books'} books={books} />
 
       <NewBook show={page === 'add'} addBook={addBook} setPage={setPage} />
 
-      <LoginForm show={page === 'login'} setToken={setToken} setPage={setPage} />
+      {token && <Recommendation show={page === 'recommendation'} user={user} books={books} />}
+
+      <LoginForm
+        show={page === 'login'}
+        setToken={setToken}
+        setPage={setPage}
+      />
     </div>
   )
 }
